@@ -59,7 +59,7 @@ export default function MermaidDiagram({definition, postID, index}: Props) {
     const handleCopy = async () => {
         const copySucceeded = await copyText(definition);
         if (!copySucceeded) {
-            setError((currentError) => currentError || '?먮Ц 蹂듭궗???ㅽ뙣?덉뒿?덈떎. 釉뚮씪?곗? 沅뚰븳???뺤씤??二쇱꽭??');
+            setError((currentError) => currentError || 'Could not copy the source text. Check browser permissions.');
             return;
         }
 
@@ -88,19 +88,19 @@ export default function MermaidDiagram({definition, postID, index}: Props) {
                         onClick={() => setShowSource(true)}
                         type='button'
                     >
-                        {'?먮Ц 蹂닿린'}
+                        {'View source'}
                     </button>
                     <button
                         className='langflow-mermaid-toolbar-button'
                         onClick={() => setShowRenderedPopup(true)}
                         type='button'
                     >
-                        {'?뚮뜑 ?앹뾽'}
+                        {'Open preview'}
                     </button>
                 </div>
                 {error && (
                     <div className='langflow-mermaid-error'>
-                        {`Mermaid ?뚮뜑留??ㅽ뙣: ${error}`}
+                        {`Mermaid render failed: ${error}`}
                     </div>
                 )}
                 {error ? (
@@ -130,7 +130,7 @@ export default function MermaidDiagram({definition, postID, index}: Props) {
                         role='dialog'
                     >
                         <div className='langflow-mermaid-modal-header'>
-                            <strong>{'Mermaid ?뚮뜑 ?앹뾽'}</strong>
+                            <strong>{'Mermaid preview'}</strong>
                             <div className='langflow-mermaid-modal-actions'>
                                 <button
                                     className='langflow-mermaid-toolbar-button'
@@ -144,13 +144,13 @@ export default function MermaidDiagram({definition, postID, index}: Props) {
                                     onClick={() => setShowRenderedPopup(false)}
                                     type='button'
                                 >
-                                    {'?リ린'}
+                                    {'Close'}
                                 </button>
                             </div>
                         </div>
                         {popupError && (
                             <div className='langflow-mermaid-error langflow-mermaid-modal-error'>
-                                {`Mermaid ?뚮뜑留??ㅽ뙣: ${popupError}`}
+                                {`Mermaid render failed: ${popupError}`}
                             </div>
                         )}
                         <div className='langflow-mermaid-modal-content'>
@@ -195,7 +195,7 @@ export default function MermaidDiagram({definition, postID, index}: Props) {
                                     onClick={() => setShowSource(false)}
                                     type='button'
                                 >
-                                    {'?リ린'}
+                                    {'Close'}
                                 </button>
                             </div>
                         </div>

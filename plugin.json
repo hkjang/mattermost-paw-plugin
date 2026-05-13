@@ -1,7 +1,7 @@
 {
     "id": "com.mattermost.paw",
     "name": "mattermost-paw-plugin",
-    "version": "0.1.28",
+    "version": "0.1.29",
     "description": "Mattermost users talk to their personal paw/qwenpaw agent through @paw.",
     "homepage_url": "https://github.com/hkjang/mattermost-paw-plugin",
     "support_url": "https://github.com/hkjang/mattermost-paw-plugin/issues",

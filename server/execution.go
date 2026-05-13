@@ -222,7 +222,7 @@ func truncatePlain(value string, maxLength int) string {
 func splitMessage(message string, maxLength int) []string {
 	message = strings.TrimSpace(message)
 	if message == "" {
-		return []string{"?묐떟??鍮꾩뼱 ?덉뒿?덈떎."}
+		return []string{"The response was empty."}
 	}
 	if maxLength <= 0 || len(message) <= maxLength {
 		return []string{message}
@@ -298,7 +298,7 @@ func (p *Plugin) createPawBotPost(botUserID, channelID, rootID string) (*model.P
 		ChannelId: channelID,
 		RootId:    rootID,
 		Type:      "custom_paw_bot",
-		Message:   "?묐떟 ?앹꽦 以?..",
+		Message:   "Generating response...",
 		Props: map[string]any{
 			"from_bot":               "true",
 			"paw_bot":                "true",
@@ -328,7 +328,7 @@ func (u *pawStreamingUpdater) writePost(message, thinking string, streaming bool
 	}
 	message = strings.TrimSpace(message)
 	if message == "" {
-		message = "?묐떟 ?앹꽦 以?.."
+		message = "Generating response..."
 	}
 	updated := *u.post
 	updated.Message = message
@@ -366,7 +366,7 @@ func (u *pawStreamingUpdater) updateState(text, thinking string, tools []string,
 		if !u.fits(chunkMessage) {
 			chunkMessage = truncateRunes(chunkMessage, u.maxRunes)
 		}
-		if err := u.writePost(chunkMessage+"\n\n_(?댁뼱??_", thinking, false, "completed"); err != nil {
+		if err := u.writePost(chunkMessage+"\n\n_(continued)_", thinking, false, "completed"); err != nil {
 			return err
 		}
 		newPost, err := u.plugin.createPawBotPost(u.botUserID, u.channelID, u.rootID)
@@ -387,7 +387,7 @@ func (u *pawStreamingUpdater) completeState(text, thinking string, tools []strin
 		visibleTools := tools[u.flushedTools:]
 		message := renderStreamingMessage(text, thinking, visibleTools, false)
 		if message == "" {
-			message = "?묐떟??鍮꾩뼱 ?덉뒿?덈떎."
+			message = "The response was empty."
 		}
 		if u.fits(message) || len(visibleTools) <= 1 {
 			if !u.fits(message) {
@@ -401,7 +401,7 @@ func (u *pawStreamingUpdater) completeState(text, thinking string, tools []strin
 		if !u.fits(chunkMessage) {
 			chunkMessage = truncateRunes(chunkMessage, u.maxRunes)
 		}
-		if err := u.writePost(chunkMessage+"\n\n_(?댁뼱??_", thinking, false, "completed"); err != nil {
+		if err := u.writePost(chunkMessage+"\n\n_(continued)_", thinking, false, "completed"); err != nil {
 			return err
 		}
 		newPost, err := u.plugin.createPawBotPost(u.botUserID, u.channelID, u.rootID)
@@ -436,7 +436,7 @@ func truncateRunes(message string, maxRunes int) string {
 	if len(runes) <= maxRunes {
 		return message
 	}
-	suffix := "\n\n???섎┝)"
+	suffix := "\n\n...(truncated)"
 	cut := maxRunes - len([]rune(suffix))
 	if cut < 1 {
 		cut = maxRunes
@@ -451,7 +451,7 @@ func (u *pawStreamingUpdater) complete(message string) error {
 	}
 	message = strings.TrimSpace(message)
 	if message == "" {
-		message = "?묐떟??鍮꾩뼱 ?덉뒿?덈떎."
+		message = "The response was empty."
 	}
 	updated := *u.post
 	updated.Message = message

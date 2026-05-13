@@ -94,13 +94,8 @@ func (p *Plugin) handlePostedMessage(post *model.Post) error {
 		return fmt.Errorf("failed to get channel: %w", appErr)
 	}
 
-	// DM 梨꾨꼸??寃쎌슦, paw 遊뉗씠 ?대떦 DM??硫ㅻ쾭?몄? ?뺤씤.
-	// ?ㅻⅨ ?뚮윭洹몄씤(?? OCS)??留뚮뱺 遊뉕낵??DM? 臾댁떆?쒕떎.
 	if channel.Type == model.ChannelTypeDirect {
-		if account.UserID == "" {
-			return nil
-		}
-		if !strings.Contains(channel.Name, account.UserID) {
+		if account.UserID == "" || !strings.Contains(channel.Name, account.UserID) {
 			return nil
 		}
 	}
@@ -125,7 +120,7 @@ func (p *Plugin) handlePostedMessage(post *model.Post) error {
 		IsDM:    channel.Type == model.ChannelTypeDirect,
 	}
 	if len(post.FileIds) > 0 {
-		return p.postText(channel.Id, message.RootID, "泥⑤? ?뚯씪? ?꾩쭅 吏?먰븯吏 ?딆뒿?덈떎.")
+		return p.postText(channel.Id, message.RootID, "File attachments are not supported yet.")
 	}
 	if message.Prompt == "" {
 		return p.postText(channel.Id, message.RootID, buildUsageMessage(cfg.BotUsername))
@@ -189,35 +184,32 @@ func responseRootID(post *model.Post, channel *model.Channel) string {
 }
 
 func (p *Plugin) processPawMessage(ctx context.Context, cfg *runtimeConfiguration, msg incomingMessage) error {
-	// domainUserID: QwenPaw ?쒕툕?꾨찓?몄슜 (sj.lee ??sj-lee)
 	domainUserID, err := resolveMappedUserID(msg.User, cfg)
 	if err != nil {
-		return p.postText(msg.Channel.Id, msg.RootID, "?ъ슜??ID瑜??꾨찓?몄쑝濡?蹂?섑븷 ???놁뒿?덈떎. 愿由ъ옄?먭쾶 臾몄쓽?댁＜?몄슂.")
+		return p.postText(msg.Channel.Id, msg.RootID, "Could not map your Mattermost user ID to a QwenPaw domain. Please contact an administrator.")
 	}
-	// hubUserID: JupyterHub API???먮낯 username (sj.lee 洹몃?濡?
 	hubUserID := strings.ToLower(strings.TrimSpace(msg.User.Username))
 
-	command := classifyUserCommand(msg.Prompt)
-	switch command {
+	switch classifyUserCommand(msg.Prompt) {
 	case "start":
 		if !cfg.AllowUserStartServer {
-			return p.postText(msg.Channel.Id, msg.RootID, "?쒕쾭 ?쒖옉 湲곕뒫??鍮꾪솢?깊솕?섏뼱 ?덉뒿?덈떎.")
+			return p.postText(msg.Channel.Id, msg.RootID, "Server start is disabled by the administrator.")
 		}
 		return p.startUserServer(ctx, cfg, msg.Channel.Id, msg.RootID, hubUserID)
 	case "stop":
 		if !cfg.AllowUserStopServer {
-			return p.postText(msg.Channel.Id, msg.RootID, "?쒕쾭 以묒? 湲곕뒫??鍮꾪솢?깊솕?섏뼱 ?덉뒿?덈떎.")
+			return p.postText(msg.Channel.Id, msg.RootID, "Server stop is disabled by the administrator.")
 		}
 		return p.stopUserServer(ctx, cfg, msg.Channel.Id, msg.RootID, hubUserID)
 	case "status":
 		status, err := p.getUserServerStatus(ctx, cfg, hubUserID)
 		if err != nil {
-			return p.postText(msg.Channel.Id, msg.RootID, "媛쒖씤 ?먯씠?꾪듃 ?쒕쾭 ?곹깭瑜??뺤씤?????놁뒿?덈떎.")
+			return p.postText(msg.Channel.Id, msg.RootID, "Could not check your personal QwenPaw server status.")
 		}
 		if status.Ready {
-			return p.postText(msg.Channel.Id, msg.RootID, "媛쒖씤 ?먯씠?꾪듃 ?쒕쾭媛 耳쒖졇 ?덉뒿?덈떎.")
+			return p.postText(msg.Channel.Id, msg.RootID, "Your personal QwenPaw server is running.")
 		}
-		return p.postText(msg.Channel.Id, msg.RootID, "媛쒖씤 ?먯씠?꾪듃 ?쒕쾭媛 爰쇱졇 ?덉뒿?덈떎.")
+		return p.postText(msg.Channel.Id, msg.RootID, "Your personal QwenPaw server is stopped.")
 	case "session_reset":
 		return p.handleSessionReset(ctx, cfg, msg, domainUserID)
 	case "session_abort":
@@ -228,14 +220,14 @@ func (p *Plugin) processPawMessage(ctx context.Context, cfg *runtimeConfiguratio
 
 	status, err := p.getUserServerStatus(ctx, cfg, hubUserID)
 	if err != nil {
-		return p.postText(msg.Channel.Id, msg.RootID, "媛쒖씤 ?먯씠?꾪듃 ?쒕쾭 ?곹깭瑜??뺤씤?????놁뒿?덈떎.")
+		return p.postText(msg.Channel.Id, msg.RootID, "Could not check your personal QwenPaw server status.")
 	}
 	if !status.Ready {
 		if !cfg.AutoStartServer {
-			return p.postText(msg.Channel.Id, msg.RootID, "?쒕쾭瑜?癒쇱? 耳쒖＜?몄슂. `耳쒖쨾` ?먮뒗 `?쒕쾭 耳쒖쨾`?쇨퀬 蹂대궡硫??쒖옉?????덉뒿?덈떎.")
+			return p.postText(msg.Channel.Id, msg.RootID, "Start your server first by sending `start` or `/start`.")
 		}
 		if err := p.startUserServerAndWait(ctx, cfg, hubUserID); err != nil {
-			return p.postText(msg.Channel.Id, msg.RootID, "媛쒖씤 ?먯씠?꾪듃 ?쒕쾭瑜??쒖옉?????놁뒿?덈떎.")
+			return p.postText(msg.Channel.Id, msg.RootID, "Could not start your personal QwenPaw server.")
 		}
 	}
 
@@ -257,7 +249,7 @@ func (p *Plugin) processPawMessage(ctx context.Context, cfg *runtimeConfiguratio
 		return p.postText(msg.Channel.Id, msg.RootID, userFacingQwenPawError(err))
 	}
 	if strings.TrimSpace(output) == "" {
-		output = "?묐떟??鍮꾩뼱 ?덉뒿?덈떎."
+		output = "The response was empty."
 	}
 	return nil
 }
@@ -266,17 +258,17 @@ func classifyUserCommand(prompt string) string {
 	normalized := strings.ToLower(strings.TrimSpace(prompt))
 	normalized = strings.Join(strings.Fields(normalized), " ")
 	switch normalized {
-	case "耳쒖쨾", "?쒕쾭 耳쒖쨾":
+	case "start", "/start", "server start":
 		return "start"
-	case "爰쇱쨾", "?쒕쾭 爰쇱쨾":
+	case "stop", "/stop", "server stop":
 		return "stop"
-	case "status", "/status":
+	case "status", "/status", "server status":
 		return "status"
 	case "reset", "/reset", "new session", "/new":
 		return "session_reset"
-	case "以묐떒", "痍⑥냼", "?몄뀡 以묐떒", "?몄뀡 痍⑥냼", "abort", "/abort", "cancel", "/cancel", "stop":
+	case "abort", "/abort", "cancel", "/cancel":
 		return "session_abort"
-	case "?몄뀡 ?뺣낫", "?몄뀡 ?곹깭", "?몄뀡 蹂닿린", "?몄뀡", "session", "/session":
+	case "session", "/session", "session info":
 		return "session_info"
 	default:
 		return ""
@@ -285,71 +277,70 @@ func classifyUserCommand(prompt string) string {
 
 func buildUsageMessage(botUsername string) string {
 	return strings.Join([]string{
-		fmt.Sprintf("`@%s` ?ㅼ뿉 吏덈Ц???낅젰?섍굅?? 1:1 DM?먯꽌??諛붾줈 吏덈Ц??蹂대궡二쇱꽭??", botUsername),
+		fmt.Sprintf("Send a question after `@%s`, or send a direct message to the bot.", botUsername),
 		"",
-		"?쒕쾭 ?쒖뼱: `耳쒖쨾`, `?쒕쾭 耳쒖쨾`, `爰쇱쨾`, `?쒕쾭 爰쇱쨾`, `?곹깭 ?뚮젮以?",
-		"?몄뀡 愿由? `?몄뀡 ?뺣낫`, `?몄뀡 珥덇린?? (紐⑤뜽 ?ㅼ젙 臾몄젣 ?깆쑝濡??묐떟????????, `以묐떒` (吏꾪뻾 以??묒뾽 痍⑥냼)",
+		"Server commands: `start`, `stop`, `status`.",
+		"Session commands: `session`, `reset`, `abort`.",
 	}, "\n")
 }
 
-const sessionResetHint = "?꾩옱 ?몄뀡??留앷?議뚯쓣 ???덉뒿?덈떎. `?몄뀡 珥덇린???쇨퀬 蹂대궡硫????몄뀡???쒖옉?????덉뒿?덈떎."
+const sessionResetHint = "The current session may be stale. Send `reset` to start a new session."
 
 func (p *Plugin) handleSessionReset(ctx context.Context, cfg *runtimeConfiguration, msg incomingMessage, domainUserID string) error {
 	baseURL := buildUserQwenPawURL(domainUserID, cfg.BaseDomainSuffix)
 	previous, _ := p.getStoredSessionID(msg, domainUserID)
 	newSessionID, err := p.resetSessionID(ctx, cfg, baseURL, msg, domainUserID)
 	if err != nil {
-		return p.postText(msg.Channel.Id, msg.RootID, "?몄뀡 珥덇린?붿뿉 ?ㅽ뙣?덉뒿?덈떎: "+userFacingQwenPawError(err))
+		return p.postText(msg.Channel.Id, msg.RootID, "Could not reset the session: "+userFacingQwenPawError(err))
 	}
-	body := fmt.Sprintf("???몄뀡???쒖옉?덉뒿?덈떎.\n- ???몄뀡 ID: `%s`", newSessionID)
+	body := fmt.Sprintf("Started a new session.\n- New session ID: `%s`", newSessionID)
 	if previous != "" && previous != newSessionID {
-		body += fmt.Sprintf("\n- ?댁쟾 ?몄뀡 ID: `%s` (?뺣━??", previous)
+		body += fmt.Sprintf("\n- Previous session ID: `%s`", previous)
 	}
-	body += "\n\n?ㅼ떆 吏덈Ц??蹂대궡二쇱꽭??"
+	body += "\n\nSend your next question when ready."
 	return p.postText(msg.Channel.Id, msg.RootID, body)
 }
 
 func (p *Plugin) handleSessionAbort(ctx context.Context, cfg *runtimeConfiguration, msg incomingMessage, domainUserID string) error {
 	sessionID, err := p.getStoredSessionID(msg, domainUserID)
 	if err != nil {
-		return p.postText(msg.Channel.Id, msg.RootID, "?몄뀡 ?뺣낫瑜?遺덈윭?ㅼ? 紐삵뻽?듬땲??")
+		return p.postText(msg.Channel.Id, msg.RootID, "Could not load the session.")
 	}
 	if sessionID == "" {
-		return p.postText(msg.Channel.Id, msg.RootID, "????붿뿉??吏꾪뻾 以묒씤 ?몄뀡???놁뒿?덈떎.")
+		return p.postText(msg.Channel.Id, msg.RootID, "There is no active session in this scope.")
 	}
 	baseURL := buildUserQwenPawURL(domainUserID, cfg.BaseDomainSuffix)
 	if err := p.abortQwenPawSession(ctx, cfg, baseURL, sessionID); err != nil {
-		return p.postText(msg.Channel.Id, msg.RootID, "?몄뀡??以묐떒?섏? 紐삵뻽?듬땲?? "+userFacingQwenPawError(err))
+		return p.postText(msg.Channel.Id, msg.RootID, "Could not abort the session: "+userFacingQwenPawError(err))
 	}
-	return p.postText(msg.Channel.Id, msg.RootID, fmt.Sprintf("?몄뀡 `%s`??吏꾪뻾 以??묒뾽??以묐떒?덉뒿?덈떎.", sessionID))
+	return p.postText(msg.Channel.Id, msg.RootID, fmt.Sprintf("Session `%s` was aborted.", sessionID))
 }
 
 func (p *Plugin) handleSessionInfo(msg incomingMessage, domainUserID string) error {
 	sessionID, err := p.getStoredSessionID(msg, domainUserID)
 	if err != nil {
-		return p.postText(msg.Channel.Id, msg.RootID, "?몄뀡 ?뺣낫瑜?遺덈윭?ㅼ? 紐삵뻽?듬땲??")
+		return p.postText(msg.Channel.Id, msg.RootID, "Could not load the session.")
 	}
 	scope := "DM"
 	if msg.Channel != nil && !msg.IsDM {
 		if msg.RootID != "" {
-			scope = fmt.Sprintf("?ㅻ젅??猷⑦듃 `%s`)", msg.RootID)
+			scope = fmt.Sprintf("thread root `%s`", msg.RootID)
 		} else {
 			channelName := msg.Channel.Name
 			if channelName == "" {
 				channelName = msg.Channel.Id
 			}
-			scope = "梨꾨꼸 `" + channelName + "`"
+			scope = "channel `" + channelName + "`"
 		}
 	}
 	if sessionID == "" {
-		body := fmt.Sprintf("??%s?먮뒗 ?꾩쭅 ?몄뀡???놁뒿?덈떎. 泥?吏덈Ц??蹂대궡硫??먮룞?쇰줈 ?앹꽦?⑸땲??", scope)
-		return p.postText(msg.Channel.Id, msg.RootID, body)
+		return p.postText(msg.Channel.Id, msg.RootID, fmt.Sprintf("No session exists for %s yet. It will be created automatically on the first question.", scope))
 	}
 	body := strings.Join([]string{
-		fmt.Sprintf("- ?ㅼ퐫?? %s", scope),
-		fmt.Sprintf("- ?몄뀡 ID: `%s`", sessionID),
+		fmt.Sprintf("- Scope: %s", scope),
+		fmt.Sprintf("- Session ID: `%s`", sessionID),
 		"",
-		"紐낅졊?? `?몄뀡 珥덇린?? (???몄뀡), `以묐떒` (吏꾪뻾 以??묒뾽 痍⑥냼)",
+		"Commands: `reset` starts a new session, `abort` cancels the current operation.",
 	}, "\n")
 	return p.postText(msg.Channel.Id, msg.RootID, body)
 }
@@ -360,7 +351,7 @@ func (p *Plugin) postText(channelID, rootID, message string) error {
 		return err
 	}
 	if err := p.ensureBotInChannel(channelID, account.UserID); err != nil {
-		return p.postAsPluginFallback(channelID, rootID, "遊뉗쓣 梨꾨꼸??珥덈??섍굅??沅뚰븳???뺤씤?댁빞 ?⑸땲??")
+		return p.postAsPluginFallback(channelID, rootID, "Could not add the bot to the channel. Please check channel permissions.")
 	}
 	_, appErr := p.API.CreatePost(&model.Post{
 		UserId:    account.UserID,

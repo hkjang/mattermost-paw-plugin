@@ -125,7 +125,7 @@ export default function ConfigSetting(props: CustomSettingProps) {
                     <span style={{fontSize: '12px', fontWeight: 700}}>{manifest.version}</span>
                 </div>
                 {props.helpText}
-                {props.setByEnv && <Notice text={'???ㅼ젙? ?섍꼍 蹂?섎줈 愿由щ릺???ш린?먯꽌 ?섏젙?????놁뒿?덈떎.'}/>}
+                {props.setByEnv && <Notice text={'This setting is managed by an environment variable and cannot be edited here.'}/>}
                 {error && <Notice text={error}/>}
                 {validationMessages.map((message) => <Notice key={message} text={message}/>)}
                 {status?.config_error && <Notice text={status.config_error}/>}
@@ -170,7 +170,7 @@ export default function ConfigSetting(props: CustomSettingProps) {
                     <input disabled={disabled} onChange={(e) => updateConfig({jupyterhub_base_url: e.target.value})} style={fieldStyle} value={config.jupyterhub_base_url}/>
                 </Field>
                 <Field label={'JupyterHubAPIToken'}>
-                    <input disabled={disabled} onChange={(e) => updateConfig({jupyterhub_api_token: e.target.value})} placeholder={'??λ맂 ?좏겙? ?ㅼ떆 ?쒖떆?섏? ?딆뒿?덈떎.'} style={fieldStyle} type='password' value={config.jupyterhub_api_token}/>
+                    <input disabled={disabled} onChange={(e) => updateConfig({jupyterhub_api_token: e.target.value})} placeholder={'Stored tokens are not shown again.'} style={fieldStyle} type='password' value={config.jupyterhub_api_token}/>
                 </Field>
                 <div style={gridStyle}>
                     <Field label={'ServerStartTimeoutSec'}>
@@ -191,13 +191,13 @@ export default function ConfigSetting(props: CustomSettingProps) {
 
             <section style={sectionStyle}>
                 <strong>{'Status'}</strong>
-                <div>{`遊? @${status?.bot_username || config.bot_username} (${status?.bot?.active ? 'active' : 'not active'})`}</div>
+                <div>{`Bot @${status?.bot_username || config.bot_username} (${status?.bot?.active ? 'active' : 'not active'})`}</div>
                 <div>{`QwenPaw URL example: https://hkjang.${config.base_domain_suffix || 'kubagents.koreacb.com'}/api/console/chat`}</div>
                 <button className='btn btn-primary' disabled={testing} onClick={runTest} type='button'>
-                    {testing ? '?뺤씤 以?..' : 'JupyterHub ?곌껐 ?뺤씤'}
+                    {testing ? 'Checking...' : 'Test JupyterHub connection'}
                 </button>
                 {connection && (
-                    <Notice text={connection.ok ? `?곌껐 ?깃났 (${connection.status_code || 200})` : connection.message || '?곌껐 ?ㅽ뙣'}/>
+                    <Notice text={connection.ok ? `Connection succeeded (${connection.status_code || 200})` : connection.message || 'Connection failed'}/>
                 )}
             </section>
         </div>
@@ -292,13 +292,13 @@ function normalizeConfig(value: Partial<AdminPluginConfig>): AdminPluginConfig {
 function validate(config: AdminPluginConfig) {
     const messages: string[] = [];
     if (!config.bot_username.trim()) {
-        messages.push('BotUsername? ?꾩닔?낅땲??');
+        messages.push('BotUsername is required.');
     }
     if (!config.base_domain_suffix.trim()) {
-        messages.push('BaseDomainSuffix???꾩닔?낅땲??');
+        messages.push('BaseDomainSuffix is required.');
     }
     if (!config.jupyterhub_base_url.trim()) {
-        messages.push('JupyterHubBaseURL? ?꾩닔?낅땲??');
+        messages.push('JupyterHubBaseURL is required.');
     }
     return messages;
 }

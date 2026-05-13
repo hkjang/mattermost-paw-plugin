@@ -71,7 +71,7 @@ export default function PawBotPost(props: Props) {
             ))}
             <PostText
                 channelID={props.post.channel_id}
-                message={parsed.body || (streaming ? '?묐떟 ?앹꽦 以?..' : '')}
+                message={parsed.body || (streaming ? 'Generating response...' : '')}
                 postID={props.post.id}
                 showCursor={streaming}
             />

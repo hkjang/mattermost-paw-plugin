@@ -30,23 +30,23 @@ export default class PluginErrorBoundary extends React.PureComponent<Props, Stat
     public static getDerivedStateFromError(error: Error): State {
         return {
             hasError: true,
-            message: error.message || '?????녿뒗 ?ㅻ쪟媛 諛쒖깮?덉뒿?덈떎.',
+            message: error.message || 'An unexpected error occurred.',
         };
     }
 
     public componentDidCatch(error: Error, info: React.ErrorInfo) {
         // eslint-disable-next-line no-console
-        console.error(`[Langflow] ${this.props.area} ?뚮뜑留??ㅻ쪟`, error, info);
+        console.error(`[Paw] ${this.props.area} render error`, error, info);
     }
 
     public render() {
         if (this.state.hasError) {
             return (
                 <div style={containerStyle}>
-                    <strong>{`${this.props.area} ?붾㈃??遺덈윭?ㅼ? 紐삵뻽?듬땲??`}</strong>
+                    <strong>{`${this.props.area} could not be loaded.`}</strong>
                     <span>{this.state.message}</span>
                     <span style={{fontSize: '12px', opacity: 0.85}}>
-                        {'?섏씠吏瑜??덈줈怨좎묠?????ㅼ떆 ?댁뼱 蹂댁꽭?? 臾몄젣媛 怨꾩냽?섎㈃ ?뚮윭洹몄씤 濡쒓렇? 釉뚮씪?곗? 肄섏넄???④퍡 ?뺤씤??二쇱꽭??'}
+                        {'Refresh the page and try again. If the problem continues, check the plugin logs and browser console.'}
                     </span>
                 </div>
             );

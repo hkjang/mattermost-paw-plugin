@@ -1,18 +1,18 @@
 # mattermost-paw-plugin
 
-Mattermost users can talk to their personal qwenpaw agent through the `@paw` bot.
+Mattermost users can talk to their personal QwenPaw agent through the `@paw` bot.
 
 ## Behavior
 
-- Public/private channel mention: `@paw` text is sent to the user's personal qwenpaw server and the response is posted in the original thread.
+- Public/private channel mention: `@paw` text is sent to the user's personal QwenPaw server and the response is posted in the original thread.
 - Direct message with `@paw`: the full message is treated as the prompt, and replies are threaded so the RHS thread can stay open for the next turn.
 - Group DM: only messages mentioning `@paw` are handled.
 - Bot, webhook, plugin, and empty messages are ignored or answered with guidance.
-- Attachments are not supported in the MVP.
+- Attachments are not supported yet.
 
 ## User Mapping
 
-The plugin maps the Mattermost message author to a personal qwenpaw URL:
+The plugin maps the Mattermost message author to a personal QwenPaw URL:
 
 ```text
 https://{userid}.{BaseDomainSuffix}
@@ -34,11 +34,11 @@ The request body follows the QwenPaw REST API format with `input`, `session_id`,
 
 ## JupyterHub Integration
 
-Users can control their personal JupyterHub-backed qwenpaw server from Mattermost:
+Users can control their personal JupyterHub-backed QwenPaw server from Mattermost:
 
-- `耳쒖쨾` or `?쒕쾭 耳쒖쨾`: start server
-- `爰쇱쨾` or `?쒕쾭 爰쇱쨾`: stop server
-- `?곹깭 ?뚮젮以?: show server status
+- `start` or `/start`: start server
+- `stop` or `/stop`: stop server
+- `status` or `/status`: show server status
 
 JupyterHub API calls use `Authorization: token <token>`.
 

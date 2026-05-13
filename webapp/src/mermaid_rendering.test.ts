@@ -15,18 +15,18 @@ test('containsCompleteMermaidFence matches only closed mermaid fences', () => {
 
 test('splitRenderableMessage separates text and mermaid segments', () => {
     const segments = splitRenderableMessage([
-        '?쒕몢 臾몄옣',
+        'Intro sentence',
         '```mermaid',
         'graph TD',
         'A-->B',
         '```',
-        '留덈Т由?臾몄옣',
+        'Closing sentence',
     ].join('\n'));
 
     expect(segments).toEqual([
-        {kind: 'text', content: '?쒕몢 臾몄옣\n'},
+        {kind: 'text', content: 'Intro sentence\n'},
         {kind: 'mermaid', content: 'graph TD\nA-->B'},
-        {kind: 'text', content: '\n留덈Т由?臾몄옣'},
+        {kind: 'text', content: '\nClosing sentence'},
     ]);
 });
 
@@ -37,31 +37,31 @@ test('splitRenderableMessage keeps plain text when mermaid fence is incomplete',
 
 test('normalizeRenderableMessage removes blank lines inside markdown tables', () => {
     const normalized = normalizeRenderableMessage([
-        '?쒖엯?덈떎.',
+        'Before table.',
         '',
-        '    | ?대쫫 | 媛?|',
+        '    | Name | Value |',
         '',
         '    | --- | --- |',
         '',
         '    | A | 1 |',
         '',
-        '?ㅼ쓬 臾몄옣',
+        'After table.',
     ].join('\n'));
 
     expect(normalized).toBe([
-        '?쒖엯?덈떎.',
+        'Before table.',
         '',
-        '| ?대쫫 | 媛?|',
+        '| Name | Value |',
         '| --- | --- |',
         '| A | 1 |',
         '',
-        '?ㅼ쓬 臾몄옣',
+        'After table.',
     ].join('\n'));
 });
 
 test('splitRenderableMessage detects indented mermaid fences after normalization', () => {
     const segments = splitRenderableMessage([
-        '?ㅻ챸',
+        'Description',
         '    ```mermaid',
         '    graph TD',
         '    A-->B',
@@ -69,7 +69,7 @@ test('splitRenderableMessage detects indented mermaid fences after normalization
     ].join('\n'));
 
     expect(segments).toEqual([
-        {kind: 'text', content: '?ㅻ챸\n'},
+        {kind: 'text', content: 'Description\n'},
         {kind: 'mermaid', content: 'graph TD\nA-->B'},
     ]);
 });
@@ -93,7 +93,7 @@ test('normalizeRenderableMessage removes one extra blank line inside fenced code
 test('normalizeRenderableMessage does not rewrite markdown table syntax inside fenced code blocks', () => {
     const normalized = normalizeRenderableMessage([
         '```text',
-        '| ?대쫫 | 媛?|',
+        '| Name | Value |',
         '',
         '| --- | --- |',
         '```',
@@ -101,7 +101,7 @@ test('normalizeRenderableMessage does not rewrite markdown table syntax inside f
 
     expect(normalized).toBe([
         '```text',
-        '| ?대쫫 | 媛?|',
+        '| Name | Value |',
         '',
         '| --- | --- |',
         '```',

@@ -27,27 +27,27 @@ func (e *jupyterHubHTTPError) Error() string {
 
 func (p *Plugin) startUserServer(ctx context.Context, cfg *runtimeConfiguration, channelID, rootID, userID string) error {
 	if err := p.startUserServerAndWait(ctx, cfg, userID); err != nil {
-		return p.postText(channelID, rootID, "媛쒖씤 ?먯씠?꾪듃 ?쒕쾭瑜??쒖옉?????놁뒿?덈떎.")
+		return p.postText(channelID, rootID, "Could not start your personal QwenPaw server.")
 	}
-	return p.postText(channelID, rootID, "媛쒖씤 ?먯씠?꾪듃 ?쒕쾭媛 耳쒖죱?듬땲??")
+	return p.postText(channelID, rootID, "Your personal QwenPaw server is running.")
 }
 
 func (p *Plugin) stopUserServer(ctx context.Context, cfg *runtimeConfiguration, channelID, rootID, userID string) error {
 	if cfg.JupyterHubAPIToken == "" {
-		return p.postText(channelID, rootID, "JupyterHub API ?좏겙???ㅼ젙?섏뼱 ?덉? ?딆뒿?덈떎.")
+		return p.postText(channelID, rootID, "JupyterHub API token is not configured.")
 	}
 	if err := p.jupyterHubRequest(ctx, cfg, http.MethodDelete, "users", userID, "server"); err != nil {
-		return p.postText(channelID, rootID, "媛쒖씤 ?먯씠?꾪듃 ?쒕쾭瑜?以묒??????놁뒿?덈떎.")
+		return p.postText(channelID, rootID, "Could not stop your personal QwenPaw server.")
 	}
 
 	deadline := time.Now().Add(cfg.ServerStopTimeout)
 	for {
 		status, err := p.getUserServerStatus(ctx, cfg, userID)
 		if err == nil && !status.Ready {
-			return p.postText(channelID, rootID, "媛쒖씤 ?먯씠?꾪듃 ?쒕쾭媛 爰쇱죱?듬땲??")
+			return p.postText(channelID, rootID, "Your personal QwenPaw server is stopped.")
 		}
 		if time.Now().After(deadline) {
-			return p.postText(channelID, rootID, "?쒕쾭 以묒? ?湲??쒓컙??珥덇낵?섏뿀?듬땲??")
+			return p.postText(channelID, rootID, "Timed out while waiting for the server to stop.")
 		}
 		time.Sleep(cfg.ServerStatusPollInterval)
 	}

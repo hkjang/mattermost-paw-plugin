@@ -381,7 +381,7 @@ func applyQwenPawSSEEvent(state *qwenPawStreamState, sessionID string, event qwe
 				}
 			}
 			if errMsg != "" {
-				state.Text = fmt.Sprintf("媛쒖씤 ?먯씠?꾪듃 ?쒕쾭 ?ㅻ쪟?낅땲?? %s", errMsg)
+				state.Text = fmt.Sprintf("QwenPaw server error. %s", errMsg)
 			} else {
 				state.Text = "QwenPaw server error."
 			}
@@ -637,7 +637,7 @@ func renderToolLabel(part map[string]any) string {
 }
 
 func renderStoredToolBlock(label, input, output string) string {
-	if strings.HasPrefix(strings.TrimSpace(label), "?뚯씪") {
+	if strings.HasPrefix(strings.TrimSpace(label), "File") {
 		return renderFileBlock(label, output)
 	}
 	return renderToolBlock(label, input, output)
@@ -648,12 +648,12 @@ func renderToolBlock(label, input, output string) string {
 	if label == "" {
 		label = "tool"
 	}
-	blocks := []string{fmt.Sprintf("> ?꾧뎄 ?몄텧: `%s`", inlineCode(label))}
+	blocks := []string{fmt.Sprintf("> Tool call: `%s`", inlineCode(label))}
 	if input = sanitizeTerminalText(input); input != "" {
-		blocks = append(blocks, "?낅젰:\n\n"+fencedCodeBlock(codeLanguageForTool(label, input), input))
+		blocks = append(blocks, "Input:\n\n"+fencedCodeBlock(codeLanguageForTool(label, input), input))
 	}
 	if output = sanitizeTerminalText(output); output != "" {
-		blocks = append(blocks, "?곕???異쒕젰:\n\n"+fencedCodeBlock(codeLanguageForTool(label, output), output))
+		blocks = append(blocks, "Output:\n\n"+fencedCodeBlock(codeLanguageForTool(label, output), output))
 	}
 	return strings.TrimSpace(strings.Join(blocks, "\n\n"))
 }
@@ -665,19 +665,19 @@ func renderFilePart(part map[string]any) string {
 func renderFileLabel(part map[string]any) string {
 	filename := firstTextField(part, "filename", "path", "url", "name", "title")
 	if filename == "" {
-		return "?뚯씪"
+		return "File"
 	}
-	return "?뚯씪: " + filename
+	return "File: " + filename
 }
 
 func renderFileBlock(label, content string) string {
 	label = strings.TrimSpace(label)
 	if label == "" {
-		label = "?뚯씪"
+		label = "File"
 	}
 	blocks := []string{fmt.Sprintf("> %s", inlineCode(label))}
 	if content = sanitizeTerminalText(content); content != "" {
-		blocks = append(blocks, "?뚯뒪:\n\n"+fencedCodeBlock(codeLanguageForFilename(label, content), content))
+		blocks = append(blocks, "Source:\n\n"+fencedCodeBlock(codeLanguageForFilename(label, content), content))
 	}
 	return strings.TrimSpace(strings.Join(blocks, "\n\n"))
 }
@@ -883,7 +883,7 @@ func finalQwenPawMessage(state qwenPawStreamState) string {
 func finalQwenPawMessageOrEmpty(state qwenPawStreamState) string {
 	final := finalQwenPawMessage(state)
 	if final == "" {
-		return "?묐떟??鍮꾩뼱 ?덉뒿?덈떎."
+		return "The response was empty."
 	}
 	return final
 }
@@ -952,7 +952,7 @@ func (p *Plugin) doQwenPawJSON(ctx context.Context, method, endpoint string, bod
 	defer response.Body.Close()
 	responseBody, readErr := io.ReadAll(io.LimitReader(response.Body, 1024*1024))
 	if readErr != nil {
-		return nil, response.StatusCode, &qwenPawCallError{Code: "parse_failed", Message: "?묐떟 ?뺤떇???댁꽍?????놁뒿?덈떎", StatusCode: response.StatusCode}
+		return nil, response.StatusCode, &qwenPawCallError{Code: "parse_failed", Message: "Could not parse the QwenPaw response.", StatusCode: response.StatusCode}
 	}
 	return responseBody, response.StatusCode, nil
 }
@@ -963,7 +963,7 @@ func renderQwenPawResponse(body []byte) (string, error) {
 		return strings.TrimSpace(string(body)), nil
 	}
 	if message := extractQwenPawErrorMessage(payload); message != "" {
-		return "?ㅻ쪟: " + message, nil
+		return "Error: " + message, nil
 	}
 	text := extractQwenPawText(payload)
 	if text != "" {
@@ -1114,11 +1114,11 @@ func classifyQwenPawHTTPError(statusCode int) error {
 	case statusCode == http.StatusRequestTimeout || statusCode == http.StatusGatewayTimeout:
 		return &qwenPawCallError{Code: "timeout", Message: "QwenPaw response timed out.", StatusCode: statusCode}
 	case statusCode >= 400 && statusCode < 500:
-		return &qwenPawCallError{Code: "bad_request", Message: "?붿껌??泥섎━?????놁뒿?덈떎", StatusCode: statusCode}
+		return &qwenPawCallError{Code: "bad_request", Message: "QwenPaw could not process the request.", StatusCode: statusCode}
 	case statusCode >= 500:
 		return &qwenPawCallError{Code: "server_error", Message: "QwenPaw server error.", StatusCode: statusCode}
 	default:
-		return &qwenPawCallError{Code: "unexpected", Message: "?묐떟 ?뺤떇???댁꽍?????놁뒿?덈떎", StatusCode: statusCode}
+		return &qwenPawCallError{Code: "unexpected", Message: "Could not parse the QwenPaw response.", StatusCode: statusCode}
 	}
 }
 
