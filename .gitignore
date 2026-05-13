@@ -1,0 +1,16 @@
+bin/
+dist/
+package-temp/
+node_modules/
+webapp/src/manifest.ts
+server/manifest.go
+.claude
+
+# Mac
+.DS_Store
+
+# Jetbrains
+.idea/
+
+# VS Code
+.vscode
